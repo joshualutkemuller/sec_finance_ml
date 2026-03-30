@@ -1,0 +1,54 @@
+data:
+  short_interest_path: "data/short_interest.csv"
+  borrow_availability_path: "data/borrow_availability.csv"
+  price_data_path: "data/price_data.csv"
+  lookback_days: 90
+
+model:
+  n_estimators: 300
+  max_depth: 5
+  learning_rate: 0.05
+  subsample: 0.8
+  colsample_bytree: 0.8
+  random_state: 42
+  squeeze_prob_threshold_elevated: 0.35
+  squeeze_prob_threshold_high: 0.60
+  squeeze_prob_threshold_critical: 0.80
+  model_save_path: "models/squeeze_scorer.json"
+
+features:
+  si_ratio_windows:
+    - 5
+    - 10
+    - 20
+  momentum_windows:
+    - 5
+    - 10
+    - 20
+  volume_windows:
+    - 10
+    - 20
+
+alerts:
+  enabled: true
+  min_tier_for_alert: "HIGH"
+  email:
+    enabled: true
+    smtp_host: "${SMTP_HOST}"
+    smtp_port: 587
+    smtp_user: "${SMTP_USER}"
+    smtp_password: "${SMTP_PASSWORD}"
+    from_address: "${ALERT_FROM}"
+    to_addresses:
+      - "${ALERT_TO}"
+    subject_prefix: "[SHORT SQUEEZE ALERT]"
+  teams_webhook_url: "${TEAMS_WEBHOOK_URL}"
+  log_path: "logs/alerts.jsonl"
+
+powerbi:
+  workspace_id: "${POWERBI_WORKSPACE_ID}"
+  dataset_id: "${POWERBI_DATASET_ID}"
+  table_name: "ShortSqueezeScores"
+  streaming_url: "${POWERBI_STREAMING_URL}"
+  enabled: true
+  batch_size: 500

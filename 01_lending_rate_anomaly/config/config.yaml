@@ -1,0 +1,136 @@
+# ============================================================
+# Securities Lending Rate Anomaly Detector — Configuration
+# ============================================================
+# Environment secrets (SMTP_PASSWORD, POWERBI_CLIENT_ID, etc.)
+# must be set as environment variables or in a .env file.
+# This file contains only non-secret configuration values.
+# ============================================================
+
+data:
+  # Data source type: one of "csv", "databricks", "api"
+  source_type: csv
+
+  # For csv: path to the CSV file
+  # For api: base URL of the REST endpoint
+  # For databricks: SQL query string (passed at runtime) or table name
+  path: data/lending_rates.csv
+
+  # Column names in the source data
+  ticker_col: ticker
+  rate_col: borrow_rate
+  date_col: date
+
+  # How many calendar days of history to load for training/scoring
+  lookback_days: 365
+
+  # Optional benchmark rate column (for spread features).
+  # Set to null to skip spread calculations.
+  benchmark_col: fed_funds_rate
+
+# ------------------------------------------------------------
+# Isolation Forest hyperparameters
+# ------------------------------------------------------------
+isolation_forest:
+  # Expected fraction of anomalies in the data (0 < contamination <= 0.5)
+  contamination: 0.05
+
+  # Number of isolation trees in the ensemble
+  n_estimators: 200
+
+  # Random seed for reproducibility
+  random_state: 42
+
+  # Weight applied to IF score in the combined anomaly score (0–1)
+  # The LSTM score receives weight (1 - if_weight)
+  if_weight: 0.5
+
+  # Path to persist / load the trained Isolation Forest model (pickle)
+  model_path: models/isolation_forest.pkl
+
+# ------------------------------------------------------------
+# LSTM Autoencoder hyperparameters
+# ------------------------------------------------------------
+lstm:
+  # Dimensionality of the LSTM hidden state
+  hidden_size: 64
+
+  # Number of stacked LSTM layers in the encoder and decoder
+  num_layers: 2
+
+  # Training epochs
+  epochs: 50
+
+  # Mini-batch size
+  batch_size: 32
+
+  # Adam optimizer learning rate
+  learning_rate: 0.001
+
+  # Number of consecutive timesteps per input sequence (look-back window)
+  sequence_length: 20
+
+  # Percentile of training reconstruction errors used as the anomaly threshold
+  # e.g. 95 means scores above the 95th percentile of training errors are flagged
+  threshold_percentile: 95
+
+  # Path to persist / load the trained LSTM model (PyTorch state dict)
+  model_path: models/lstm_autoencoder.pt
+
+  # Path to persist the anomaly threshold scalar
+  threshold_path: models/lstm_threshold.npy
+
+# ------------------------------------------------------------
+# Alert configuration
+# ------------------------------------------------------------
+alerts:
+  # Master switch: set to false to suppress all alert dispatching
+  enabled: true
+
+  # Combined anomaly score above which an alert is fired (0–1 scale)
+  anomaly_score_threshold: 0.70
+
+  email:
+    # SMTP server hostname
+    smtp_host: smtp.office365.com
+
+    # SMTP port (587 for STARTTLS, 465 for SSL)
+    port: 587
+
+    # Sender email address (password must be in SMTP_PASSWORD env var)
+    from: lending-alerts@yourfirm.com
+
+    # List of recipient email addresses
+    to:
+      - desk-head@yourfirm.com
+      - risk-management@yourfirm.com
+      - quant-team@yourfirm.com
+
+  # Microsoft Teams incoming webhook URL
+  # Set to null or empty string to disable Teams alerts
+  teams_webhook_url: "https://yourfirm.webhook.office.com/webhookb2/YOUR-WEBHOOK-ID"
+
+  # Path to the structured JSON alert log file
+  log_path: logs/alerts.jsonl
+
+# ------------------------------------------------------------
+# PowerBI integration
+# ------------------------------------------------------------
+powerbi:
+  # Master switch: set to false to skip all PowerBI pushes
+  enabled: true
+
+  # Azure AD credentials are read from environment variables:
+  #   POWERBI_TENANT_ID, POWERBI_CLIENT_ID, POWERBI_CLIENT_SECRET
+
+  # PowerBI workspace (group) GUID
+  workspace_id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+  # PowerBI push dataset GUID
+  dataset_id: "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy"
+
+  # Table name within the push dataset
+  table_name: LendingRateAnomalies
+
+  # Full URL for the streaming dataset push endpoint
+  # Obtain from PowerBI > Dataset Settings > Streaming dataset > Push URL
+  streaming_url: "https://api.powerbi.com/beta/YOUR-TENANT/datasets/YOUR-STREAMING-DATASET-ID/rows?key=YOUR-KEY"

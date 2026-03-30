@@ -1,0 +1,58 @@
+# ============================================================
+# Collateral Optimization & Substitution Recommender
+# Configuration File
+# ============================================================
+
+data:
+  collateral_pool_path: "data/collateral_pool.csv"
+  eligibility_schedule_path: "data/eligibility_schedule.csv"
+  haircut_table_path: "data/haircut_table.csv"
+  transaction_path: "data/transactions.csv"
+
+model:
+  n_estimators: 300
+  max_depth: 6
+  learning_rate: 0.05
+  random_state: 42
+  quality_score_threshold: 0.55
+  model_save_path: "models/collateral_quality_scorer.joblib"
+  feature_cols:
+    - duration_score
+    - rating_score
+    - liquidity_score
+    - concentration_pct
+    - cost_of_carry_norm
+    - haircut_pct
+    - eligible
+
+optimization:
+  max_concentration_pct: 0.30        # max fraction of portfolio in any single asset_type
+  min_quality_score: 0.50            # blended quality floor (q @ x >= min_quality_score)
+  max_haircut: 0.15                  # blended haircut ceiling (H @ x <= max_haircut)
+  solver: "ECOS"                     # ECOS (default) or SCS (fallback)
+  cost_weight: 1.0                   # weight on financing cost in objective
+  quality_weight: 0.5                # weight on quality score in objective
+
+alerts:
+  enabled: true
+  cost_savings_threshold_bps: 5.0    # alert when savings >= 5 bps
+  email:
+    enabled: true
+    smtp_host: "smtp.office365.com"
+    smtp_port: 587
+    sender: "collateral-optimizer@example.com"
+    recipients:
+      - "financing-desk@example.com"
+      - "risk-management@example.com"
+    subject_prefix: "[Collateral Optimizer]"
+  teams_webhook_url: "https://outlook.office.com/webhook/REPLACE_ME"
+  log_path: "logs/collateral_alerts.jsonl"
+
+powerbi:
+  workspace_id: "REPLACE_WITH_WORKSPACE_ID"
+  dataset_id: "REPLACE_WITH_DATASET_ID"
+  table_name: "collateral_recommendations"
+  streaming_url: "https://api.powerbi.com/beta/REPLACE_ME/datasets/REPLACE_ME/rows"
+  enabled: false                     # set true when PowerBI credentials are configured
+  auth_url: "https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+  scope: "https://analysis.windows.net/powerbi/api/.default"

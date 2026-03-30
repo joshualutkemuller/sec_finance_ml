@@ -1,0 +1,108 @@
+# ============================================================
+# Portfolio Concentration Risk Early Warning Monitor
+# Configuration File
+# ============================================================
+
+# ------------------------------------------------------------------
+# Data paths and ingestion settings
+# ------------------------------------------------------------------
+data:
+  positions_path: "data/positions.csv"
+  market_data_path: "data/market_data.csv"
+  counterparty_path: "data/counterparty_exposures.csv"
+  # Number of historical calendar days to load for rolling features
+  lookback_days: 30
+
+# ------------------------------------------------------------------
+# Random Forest model hyper-parameters and scoring thresholds
+# ------------------------------------------------------------------
+model:
+  # scikit-learn RandomForestClassifier hyper-parameters
+  n_estimators: 200
+  max_depth: 8
+  min_samples_leaf: 5
+  random_state: 42
+
+  # Saved model artefact path (relative to project root)
+  model_path: "models/rf_risk_scorer.joblib"
+
+  # Risk score thresholds — P(HIGH|CRITICAL risk) cut-offs
+  # Scores below threshold_medium are classified as LOW
+  risk_score_threshold_medium: 0.35
+  risk_score_threshold_high: 0.60
+  risk_score_threshold_critical: 0.85
+
+# ------------------------------------------------------------------
+# Concentration metric warning thresholds
+# ------------------------------------------------------------------
+concentration:
+  # Herfindahl-Hirschman Index  (0 = perfectly diversified, 1 = monopoly)
+  # US DoJ uses 0.25 as the "highly concentrated" threshold
+  hhi_warning_threshold: 0.25
+
+  # What percentage of total AUM can the top-5 positions represent
+  # before a concentration flag is raised
+  top5_exposure_warning_pct: 40.0
+
+  # Maximum percentage of total AUM allowed in a single GICS sector
+  sector_limit_pct: 30.0
+
+  # Maximum percentage of total AUM allowed with a single counterparty
+  counterparty_limit_pct: 20.0
+
+# ------------------------------------------------------------------
+# Alert dispatch configuration
+# ------------------------------------------------------------------
+alerts:
+  # Master switch — set to false to suppress all external dispatches
+  enabled: true
+
+  email:
+    enabled: true
+    smtp_host: "smtp.office365.com"
+    smtp_port: 587
+    use_tls: true
+    # Credentials should be supplied via .env (ALERT_EMAIL_USER / ALERT_EMAIL_PASSWORD)
+    from_address: "risk-monitor@example.com"
+    to_addresses:
+      - "portfolio-risk-team@example.com"
+      - "risk-management@example.com"
+    subject_prefix: "[RISK ALERT]"
+
+  # Microsoft Teams incoming webhook URL
+  # Set via .env as TEAMS_WEBHOOK_URL to avoid storing secrets here
+  teams_webhook_url: ""
+  teams_enabled: true
+
+  # Structured JSONL audit / alert log
+  log_path: "logs/risk_alerts.jsonl"
+
+# ------------------------------------------------------------------
+# PowerBI Financing Solutions Intelligence Platform
+# ------------------------------------------------------------------
+powerbi:
+  enabled: true
+  workspace_id: ""          # Set via env POWERBI_WORKSPACE_ID
+  dataset_id: ""            # Set via env POWERBI_DATASET_ID
+  table_name: "ConcentrationRiskScores"
+  # Full streaming push dataset REST URL — overrides workspace/dataset IDs
+  # when set. Set via env POWERBI_STREAMING_URL.
+  streaming_url: ""
+  # Bearer token for PowerBI REST API — set via env POWERBI_ACCESS_TOKEN
+  access_token: ""
+  # Maximum rows to push in a single REST call (PowerBI limit: 10 000)
+  batch_size: 1000
+  # Retry on transient HTTP errors
+  max_retries: 3
+  retry_backoff_seconds: 2
+
+# ------------------------------------------------------------------
+# SHAP explainability settings
+# ------------------------------------------------------------------
+shap:
+  enabled: true
+  # Number of top feature drivers to include in each alert message
+  top_n_features: 5
+  # Write SHAP waterfall plots to disk (one PNG per HIGH/CRITICAL row)
+  save_plots: false
+  plot_output_dir: "outputs/shap_plots"
