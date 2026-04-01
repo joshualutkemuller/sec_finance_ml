@@ -1,0 +1,33 @@
+scenario_id: S08
+name: Top-1 Counterparty Default
+description: >
+  The largest lending counterparty by notional exposure defaults or becomes non-operational
+  overnight. Replicates a Lehman Brothers-style event concentrated in one counterparty.
+  Tests book concentration resilience and recall risk spillover to remaining counterparties.
+severity: Severe
+
+shocks:
+  rate_shift_bps: 0
+  sofr_shock_bps: 25             # Slight funding stress
+  ig_spread_shock_bps: 80        # Credit spreads widen on systemic concern
+  hy_spread_shock_bps: 200
+  equity_shock_pct: -0.05        # Mild equity selloff
+  vol_shock_multiplier: 1.8
+  bid_ask_multiplier: 2.5
+  market_depth_reduction_pct: 0.25
+  demand_surge_factor: 1.2
+  remove_counterparty_ids:
+    - TOP_1_COUNTERPARTY_BY_NOTIONAL   # Replace with actual counterparty ID
+  recall_risk_spillover_factor: 2.0
+  replacement_cost_bps: 20
+  haircut_floor_increase_pp: 0
+  exclude_asset_classes: []
+
+reporting:
+  push_to_powerbi: true
+  generate_pdf: true
+  alert_on_breach: true
+  breach_thresholds:
+    collateral_shortfall_usd: 5000000
+    financing_cost_delta_bps: 30
+    eligible_pool_shrinkage_pct: 0.08

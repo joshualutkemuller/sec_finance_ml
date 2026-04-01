@@ -1,0 +1,98 @@
+# =============================================================================
+# Enhanced Securities Lending Optimizer — Configuration
+# Secrets (API keys, passwords) must be set as environment variables only.
+# =============================================================================
+
+data:
+  source_type: csv                       # csv | databricks | api
+  loan_book_path: data/loan_book.csv
+  collateral_pool_path: data/collateral_pool.csv
+  market_data_path: data/market_data.csv
+  counterparty_path: data/counterparties.csv
+  lookback_days: 504                     # ~2 years of trading days
+
+features:
+  rolling_windows: [5, 10, 20, 60]
+  recall_horizon_days: 5
+  demand_horizons: [1, 3, 5]
+
+demand_forecaster:
+  model_path: models/demand_forecaster.pkl
+  n_estimators: 500
+  max_depth: 7
+  learning_rate: 0.03
+  num_leaves: 63
+  quantile_alpha: 0.6                    # asymmetric loss — penalise over-forecast
+  random_state: 42
+
+recall_classifier:
+  model_path: models/recall_classifier.pkl
+  calibrated_model_path: models/recall_classifier_calibrated.pkl
+  n_estimators: 300
+  max_depth: 6
+  learning_rate: 0.05
+  random_state: 42
+  recall_threshold_days: 5
+
+rl_policy:
+  model_path: models/rl_policy.zip
+  algorithm: PPO                         # PPO | SAC
+  policy: MlpPolicy
+  total_timesteps: 500000
+  n_steps: 2048
+  batch_size: 64
+  learning_rate: 3.0e-4
+  gamma: 0.99
+  ent_coef: 0.01
+  # Reward shaping weights
+  reward_weights:
+    fee_income: 1.0
+    financing_cost: 0.8
+    capital_charge: 0.6
+    recall_risk: 0.5
+    concentration: 0.4
+
+optimizer:
+  mode: scalarized                       # scalarized | pareto
+  solver: ECOS                           # ECOS | SCS
+  max_concentration_per_asset_class: 0.35
+  min_quality_floor: 0.55
+  min_collateral_coverage: 1.05          # haircut-adjusted value >= 105% of exposure
+  capital_budget_usd: 50000000           # max estimated RWA contribution
+  max_recall_risk_weight: 0.15           # max portfolio weight for high-recall-risk assets
+
+# NSGA-II settings (used when optimizer.mode = pareto)
+nsga2:
+  pop_size: 200
+  n_gen: 100
+  seed: 42
+
+alerts:
+  enabled: true
+  min_severity: INFO                     # INFO | WARNING | CRITICAL
+  email:
+    smtp_host: ${SMTP_HOST}
+    port: ${SMTP_PORT}
+    user: ${SMTP_USER}
+    from_addr: ${ALERT_FROM}
+    recipients: ${ALERT_EMAIL_RECIPIENTS}
+  teams_webhook_url: ${TEAMS_WEBHOOK_URL}
+  log_path: logs/slo_alerts.jsonl
+  alert_types:
+    - SUBOPTIMAL_ALLOCATION
+    - HIGH_RECALL_RISK
+    - DEMAND_SPIKE_FORECAST
+    - CAPITAL_BUDGET_BREACH
+    - CONCENTRATION_BREACH
+    - OPTIMIZATION_FAILURE
+
+powerbi:
+  enabled: true
+  workspace_id: ${POWERBI_WORKSPACE_ID}
+  dataset_id: your-slo-dataset-id
+  table_name: EnhancedLendingAllocations
+  streaming_url: ${POWERBI_STREAMING_URL_SLO}
+
+logging:
+  level: INFO
+  audit_log: logs/slo_audit.jsonl

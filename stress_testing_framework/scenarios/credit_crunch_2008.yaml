@@ -1,0 +1,47 @@
+scenario_id: S05
+name: Credit Crunch 2008
+description: >
+  Replicates the 2008-2009 global financial crisis shock profile. Severe credit spread
+  widening combined with equity market crash, liquidity evaporation, and counterparty
+  stress. This is the extreme tail risk scenario. IG spreads widened ~400bps, HY ~1500bps,
+  equity fell ~38%, bid-ask spreads multiplied 8x, and Lehman Brothers collapsed.
+severity: Extreme
+
+shocks:
+  rate_shift_bps: -100           # Flight to quality pushed rates DOWN in 2008
+  sofr_shock_bps: -50
+  short_end_shift_bps: -150
+  long_end_shift_bps: -50
+  ig_spread_shock_bps: 400
+  hy_spread_shock_bps: 1500
+  sector_spread_shocks:
+    Financials: 600
+    Real Estate: 800
+  equity_shock_pct: -0.38
+  name_specific_equity_shocks:
+    # Banks most affected — approximate 2008 declines
+    C: -0.70
+    BAC: -0.65
+    GS: -0.55
+  vol_shock_multiplier: 4.0
+  bid_ask_multiplier: 8.0
+  market_depth_reduction_pct: 0.65
+  demand_surge_factor: 0.40       # Demand actually fell as markets froze
+  remove_counterparty_ids:
+    - COUNTERPARTY_LEHMAN         # Replace with actual ID in production
+  recall_risk_spillover_factor: 3.0
+  replacement_cost_bps: 50
+  haircut_floor_increase_pp: 5
+  exclude_asset_classes:
+    - MBS_Non_Agency
+    - CDO
+
+reporting:
+  push_to_powerbi: true
+  generate_pdf: true
+  alert_on_breach: true
+  breach_thresholds:
+    collateral_shortfall_usd: 1000000
+    financing_cost_delta_bps: 20
+    eligible_pool_shrinkage_pct: 0.05
+    capital_charge_delta_usd: 1000000

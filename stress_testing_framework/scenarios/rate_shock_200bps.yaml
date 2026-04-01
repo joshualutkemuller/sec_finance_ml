@@ -1,0 +1,36 @@
+scenario_id: S02
+name: Rate Shock +200bps
+description: >
+  Instantaneous parallel upward shift of the entire yield curve by 200 basis points.
+  Replicates a rapid rate normalization shock (e.g., 1994 bond market crash, 2022 Fed
+  hiking cycle). Tests sensitivity of fixed-income collateral valuations and financing
+  cost to a severe, sudden rate increase.
+severity: Severe
+
+shocks:
+  rate_shift_bps: 200
+  sofr_shock_bps: 200
+  short_end_shift_bps: 200
+  long_end_shift_bps: 200
+  ig_spread_shock_bps: 30        # Modest spread widening accompanies rate shock
+  hy_spread_shock_bps: 100
+  equity_shock_pct: -0.08        # Mild equity selloff on rate shock
+  vol_shock_multiplier: 1.5
+  bid_ask_multiplier: 1.5
+  market_depth_reduction_pct: 0.15
+  demand_surge_factor: 1.0
+  remove_counterparty_ids: []
+  recall_risk_spillover_factor: 1.0
+  replacement_cost_bps: 0
+  haircut_floor_increase_pp: 0
+  exclude_asset_classes: []
+
+reporting:
+  push_to_powerbi: true
+  generate_pdf: true
+  alert_on_breach: true
+  breach_thresholds:
+    collateral_shortfall_usd: 5000000
+    financing_cost_delta_bps: 150
+    eligible_pool_shrinkage_pct: 0.10
+    capital_charge_delta_usd: 2000000

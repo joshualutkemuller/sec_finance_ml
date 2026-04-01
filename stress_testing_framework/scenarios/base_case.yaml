@@ -1,0 +1,31 @@
+scenario_id: S01
+name: Base Case
+description: >
+  No shocks applied. Baseline optimizer output under current market conditions.
+  Used as the reference point for all delta calculations.
+severity: Moderate
+
+shocks:
+  rate_shift_bps: 0
+  sofr_shock_bps: 0
+  ig_spread_shock_bps: 0
+  hy_spread_shock_bps: 0
+  equity_shock_pct: 0.0
+  vol_shock_multiplier: 1.0
+  bid_ask_multiplier: 1.0
+  market_depth_reduction_pct: 0.0
+  demand_surge_factor: 1.0
+  remove_counterparty_ids: []
+  recall_risk_spillover_factor: 1.0
+  replacement_cost_bps: 0
+  haircut_floor_increase_pp: 0
+  exclude_asset_classes: []
+
+reporting:
+  push_to_powerbi: true
+  generate_pdf: false
+  alert_on_breach: false
+  breach_thresholds:
+    collateral_shortfall_usd: 10000000
+    financing_cost_delta_bps: 50
+    eligible_pool_shrinkage_pct: 0.15
