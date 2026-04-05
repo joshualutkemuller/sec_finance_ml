@@ -1,0 +1,146 @@
+# =============================================================================
+# FRED Macro Intelligence — Configuration
+# Secrets (FRED_API_KEY, PowerBI credentials) must be set as env vars.
+# =============================================================================
+
+fred:
+  api_key: ${FRED_API_KEY}
+  cache_dir: data/fred_cache
+  lookback_years: 10
+  # Series fetched daily
+  rate_series:
+    sofr: SOFR
+    fed_funds: FEDFUNDS
+    fed_funds_daily: DFF
+    iorb: IORB
+    prime_rate: DPRIME
+    discount_rate: DPCREDIT
+  curve_series:
+    t_1mo: DGS1MO
+    t_3mo: DGS3MO
+    t_6mo: DGS6MO
+    t_1yr: DGS1
+    t_2yr: DGS2
+    t_5yr: DGS5
+    t_10yr: DGS10
+    t_30yr: DGS30
+  spread_series:
+    curve_10y2y: T10Y2Y
+    curve_10y3m: T10Y3M
+    ted_spread: TEDRATE
+    hy_oas: BAMLH0A0HYM2
+    ig_oas: BAMLC0A0CM
+    mortgage_30y: MORTGAGE30US
+    mortgage_15y: MORTGAGE15US
+  liquidity_series:
+    vix: VIXCLS
+    m2: M2SL
+    reserve_balances: WRESBAL
+    rrp_balance: RRPONTSYD
+    fed_balance_sheet: WSHOSHO
+  agency_series:
+    mortgage_spread: DMORTGAGE30US
+    fha_30y: OBMMIFHA30YF
+
+features:
+  rolling_windows: [5, 10, 20, 60, 120]
+  zscore_windows: [60, 120]
+  funding_stress_weights:
+    ted_spread_z: 0.30
+    vix_z: 0.25
+    hy_oas_z: 0.30
+    rrp_change_z: 0.15
+  collateral_quality_weights:
+    ig_oas_z_inv: 0.40
+    curve_level_inv: 0.30
+    vix_z_inv: 0.30
+
+regime_detector:
+  method: hmm                    # hmm | kmeans | ensemble
+  n_regimes: 5
+  hmm_n_iter: 200
+  hmm_covariance_type: full
+  kmeans_n_clusters: 5
+  kmeans_random_state: 42
+  pca_components: 5              # for kmeans feature reduction
+  model_path: models/regime_detector.pkl
+  regime_labels:
+    0: "Easing / QE"
+    1: "Neutral / Normal"
+    2: "Hiking Cycle"
+    3: "Stress / Crisis"
+    4: "Late Cycle / Inversion"
+
+spread_forecaster:
+  lgbm_model_path: models/spread_forecaster_lgbm.pkl
+  lstm_model_path: models/spread_forecaster_lstm.pt
+  horizons: [1, 3, 5, 10]
+  targets:
+    - sofr
+    - hy_oas
+    - ig_oas
+  lgbm:
+    n_estimators: 600
+    max_depth: 7
+    learning_rate: 0.03
+    num_leaves: 63
+    quantile_alpha: 0.70
+    random_state: 42
+  lstm:
+    seq_len: 60
+    hidden_size: 128
+    num_layers: 2
+    dropout: 0.2
+    mc_dropout_passes: 100       # for uncertainty quantification
+    epochs: 50
+    batch_size: 64
+    learning_rate: 1.0e-3
+
+agency_demand_predictor:
+  model_path: models/agency_demand_predictor.pkl
+  n_estimators: 400
+  max_depth: 6
+  learning_rate: 0.05
+  random_state: 42
+  shap_top_n: 8                  # number of SHAP features to show in waterfall
+
+visualization:
+  theme: plotly_white            # plotly_white | plotly_dark | ggplot2
+  color_palette:
+    easing: "#2ecc71"
+    neutral: "#3498db"
+    hiking: "#f39c12"
+    stress: "#e74c3c"
+    late_cycle: "#9b59b6"
+  chart_height: 500
+  chart_width: 1100
+  export_format: png             # png | svg | html
+  export_dir: outputs/charts
+
+alerts:
+  enabled: true
+  regime_change_alert: true      # alert when regime changes
+  spread_spike_threshold_z: 2.0  # alert when spread z-score > 2
+  email:
+    smtp_host: ${SMTP_HOST}
+    port: ${SMTP_PORT}
+    user: ${SMTP_USER}
+    from_addr: ${ALERT_FROM}
+    recipients: ${ALERT_EMAIL_RECIPIENTS}
+  teams_webhook_url: ${TEAMS_WEBHOOK_URL}
+  log_path: logs/macro_alerts.jsonl
+
+powerbi:
+  enabled: true
+  workspace_id: ${POWERBI_WORKSPACE_ID}
+  dataset_id: your-macro-dataset-id
+  tables:
+    regime_signals: MacroRegimeSignals
+    spread_forecasts: SpreadForecasts
+    agency_demand: AgencyDemandForecast
+    curve_snapshot: YieldCurveSnapshot
+  streaming_url: ${POWERBI_STREAMING_URL_MACRO}
+
+logging:
+  level: INFO
+  audit_log: logs/macro_audit.jsonl
