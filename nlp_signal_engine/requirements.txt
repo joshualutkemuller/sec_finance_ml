@@ -1,0 +1,15 @@
+transformers>=4.36
+torch>=2.0
+spacy>=3.7
+sec-edgar-downloader>=5.0
+feedparser>=6.0
+requests>=2.31
+anthropic>=0.25
+pandas>=2.0
+numpy>=1.24
+pyyaml>=6.0
+python-dotenv>=1.0
+beautifulsoup4>=4.12
+lxml>=4.9
+nltk>=3.8
+scikit-learn>=1.3

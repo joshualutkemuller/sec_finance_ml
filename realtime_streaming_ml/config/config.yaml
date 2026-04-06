@@ -1,0 +1,49 @@
+# Real-Time Streaming ML — Configuration
+# Author: Joshua Lutkemuller, Managing Director
+
+kafka:
+  bootstrap_servers: ${KAFKA_BOOTSTRAP_SERVERS}   # e.g. localhost:9092
+  topic_borrow_rates: borrow_rates
+  topic_anomaly_alerts: anomaly_alerts
+  consumer_group: streaming_ml_consumer
+  auto_offset_reset: latest
+  producer_batch_ms: 5
+
+redis:
+  host: ${REDIS_HOST}
+  port: 6379
+  db: 0
+  key_prefix: "rrcf:"
+
+rrcf:
+  num_trees: 200
+  shingle_size: 4                        # rolling window fed to RRCF
+  tree_size: 256                         # max points per tree
+  anomaly_score_threshold_sigma: 3.0    # CoDisp > mean + N*std → anomaly
+  ewm_alpha: 0.02                        # for running mean/std of CoDisp
+
+streaming:
+  session_window_seconds: 30
+  velocity_window_seconds: 10
+  velocity_threshold_bps_per_sec: 5.0   # |Δrate/Δsec| → velocity alert
+  regime_band_sigma: 2.0                 # 30s VWAP vs rolling band
+
+alerts:
+  enabled: true
+  target_latency_ms: 500
+  teams_webhook_url: ${TEAMS_WEBHOOK_URL}
+  email:
+    smtp_host: ${SMTP_HOST}
+    port: ${SMTP_PORT}
+    user: ${SMTP_USER}
+    from_addr: ${ALERT_FROM}
+    recipients: ${ALERT_EMAIL_RECIPIENTS}
+  log_path: logs/streaming_alerts.jsonl
+
+simulation:
+  n_tickers: 50
+  tick_interval_ms: 100
+  base_rate_mean: 0.035
+  base_rate_std: 0.005
+  anomaly_probability: 0.005
+  anomaly_spike_bps: 200

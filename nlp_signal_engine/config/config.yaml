@@ -1,0 +1,65 @@
+# NLP Signal Engine — Configuration
+# Author: Joshua Lutkemuller, Managing Director
+
+sec_edgar:
+  lookback_days: 90
+  filing_types: ["10-K", "10-Q"]
+  risk_keywords:
+    going_concern: ["going concern", "substantial doubt", "ability to continue"]
+    liquidity_stress: ["liquidity", "cash constraints", "credit facility", "covenant breach"]
+    short_interest: ["short selling", "short interest", "securities lending"]
+    material_weakness: ["material weakness", "internal control", "restatement"]
+  output_path: data/edgar_signals.parquet
+
+fomc:
+  statements_url: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
+  hawkish_terms: ["inflation", "restrictive", "further increases", "firmer", "above target"]
+  dovish_terms: ["easing", "cut", "below target", "support", "accommodative", "pause"]
+  output_path: data/fomc_signals.parquet
+
+news:
+  feeds:
+    - url: https://feeds.reuters.com/reuters/businessNews
+      source: Reuters
+    - url: https://feeds.bloomberg.com/markets/news.rss
+      source: Bloomberg
+  lookback_hours: 24
+  output_path: data/news_signals.parquet
+
+nlp:
+  finbert_model: ProsusAI/finbert           # HuggingFace model ID
+  spacy_model: en_core_web_lg
+  batch_size: 32
+  max_seq_len: 512
+  sentiment_threshold_bullish: 0.6
+  sentiment_threshold_bearish: -0.6
+
+morning_brief:
+  enabled: true
+  model: claude-opus-4-6
+  max_tokens: 800
+  output_path: outputs/morning_brief.txt
+  email_recipients: ${ALERT_EMAIL_RECIPIENTS}
+  teams_webhook_url: ${TEAMS_WEBHOOK_URL}
+  schedule_time: "06:45"                    # ET
+
+signals:
+  zscore_window: 60
+  output_path: data/nlp_signals.parquet
+
+alerts:
+  enabled: true
+  risk_score_threshold: 0.70
+  sentiment_z_threshold: 2.0
+  log_path: logs/nlp_alerts.jsonl
+  teams_webhook_url: ${TEAMS_WEBHOOK_URL}
+
+powerbi:
+  enabled: true
+  workspace_id: ${POWERBI_WORKSPACE_ID}
+  dataset_id: your-nlp-dataset-id
+  table_name: NLPSignals
+
+logging:
+  level: INFO
+  audit_log: logs/nlp_audit.jsonl

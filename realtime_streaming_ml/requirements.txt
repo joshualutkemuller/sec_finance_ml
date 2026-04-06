@@ -1,0 +1,9 @@
+kafka-python>=2.0
+rrcf>=0.4
+numpy>=1.24
+pandas>=2.0
+redis>=5.0
+requests>=2.31
+pyyaml>=6.0
+python-dotenv>=1.0
+# apache-flink>=1.18   # install separately: pip install apache-flink

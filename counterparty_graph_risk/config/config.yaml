@@ -1,0 +1,57 @@
+# Counterparty Graph Risk — Configuration
+# Author: Joshua Lutkemuller, Managing Director
+
+data:
+  source_type: csv
+  loan_book_path: data/loan_book.csv
+  collateral_path: data/collateral.csv
+  counterparty_path: data/counterparties.csv
+  lookback_days: 90
+
+graph:
+  min_edge_weight_usd: 1000000        # minimum notional to create an edge
+  overlap_threshold: 0.20             # min shared-security ratio for co-exposure edge
+  include_historical_edges: true
+  historical_window_days: 30
+
+gat_model:
+  model_path: models/gat_model.pt
+  hidden_channels: 64
+  num_heads: 4
+  num_layers: 3
+  dropout: 0.2
+  epochs: 150
+  learning_rate: 5.0e-4
+  weight_decay: 1.0e-5
+
+contagion:
+  default_probability_floor: 0.01    # minimum assumed CP default probability
+  cascade_depth: 3                   # hops to simulate contagion spread
+  contagion_score_threshold: 0.60    # alert threshold
+
+network_analytics:
+  fragility_alert_threshold: 5.0     # 1/Fiedler value threshold
+  centrality_top_n: 5                # report top-N nodes by centrality
+  community_resolution: 1.0          # Louvain resolution parameter
+
+alerts:
+  enabled: true
+  min_severity: WARNING
+  email:
+    smtp_host: ${SMTP_HOST}
+    port: ${SMTP_PORT}
+    user: ${SMTP_USER}
+    from_addr: ${ALERT_FROM}
+    recipients: ${ALERT_EMAIL_RECIPIENTS}
+  teams_webhook_url: ${TEAMS_WEBHOOK_URL}
+  log_path: logs/graph_alerts.jsonl
+
+powerbi:
+  enabled: true
+  workspace_id: ${POWERBI_WORKSPACE_ID}
+  dataset_id: your-graph-risk-dataset-id
+  table_name: CounterpartyGraphRisk
+
+logging:
+  level: INFO
+  audit_log: logs/graph_audit.jsonl

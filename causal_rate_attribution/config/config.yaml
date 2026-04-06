@@ -1,0 +1,55 @@
+# Causal Rate Attribution — Configuration
+# Author: Joshua Lutkemuller, Managing Director
+
+data:
+  financing_cost_path: data/financing_costs.csv    # daily financing cost bps
+  loan_book_path: data/loan_book.csv
+  fred_features_path: data/fred_features.parquet   # from fred_macro_intelligence
+  lookback_days: 504
+
+causal:
+  treatment: fed_funds_change_bps                  # T: daily Fed Funds change
+  outcome: financing_cost_bps                      # Y: financing cost above SOFR
+  instrument: fomc_meeting_flag                    # Z: FOMC meeting day indicator
+  confounders:                                     # W: observable confounders
+    - funding_stress_index
+    - curve_10y2y
+    - hy_oas
+    - book_notional_bn
+    - hy_mix_pct
+  effect_modifiers:                                # X: for HTE analysis
+    - asset_class
+    - counterparty_tier
+    - trade_term_days
+
+ate_estimator:
+  method: iv                                       # iv | regression | propensity
+  n_bootstrap: 200
+
+dml_estimator:
+  model_y: lightgbm                                # residual outcome model
+  model_t: lightgbm                                # residual treatment model
+  n_crossfit_splits: 5
+  random_state: 42
+
+causal_forest:
+  n_estimators: 500
+  min_samples_leaf: 20
+  random_state: 42
+  n_bootstrap: 200
+
+counterfactual:
+  scenarios:
+    no_nov_hike:
+      description: "November 2025 hike never happened"
+      override: {fed_funds_change_bps: 0}
+      date_range: ["2025-11-01", "2025-12-31"]
+    rate_cut_50bps:
+      description: "50bps cut scenario"
+      override: {fed_funds_change_bps: -50}
+      date_range: ["2026-01-01", "2026-03-31"]
+
+output:
+  report_path: outputs/attribution_report.txt
+  chart_dir: outputs/charts
+  log_path: logs/causal_audit.jsonl

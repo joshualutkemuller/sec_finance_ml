@@ -1,0 +1,54 @@
+# Model Governance Framework — Configuration
+# Author: Joshua Lutkemuller, Managing Director
+
+models:
+  registry_path: config/model_registry.yaml
+  baseline_data_dir: data/baselines       # training distribution snapshots
+  predictions_log_dir: logs/predictions   # per-model prediction logs
+
+drift:
+  psi_warning_threshold: 0.10
+  psi_critical_threshold: 0.25
+  concept_drift_window_days: 30
+  concept_drift_error_threshold: 0.15    # relative increase in error rate
+  min_samples_for_drift_test: 100
+
+performance:
+  metrics_window_days: 30
+  min_acceptable_auc: 0.70               # for classification models
+  min_acceptable_r2: 0.50                # for regression models
+  alert_on_degradation: true
+
+shadow_mode:
+  enabled: true
+  comparison_window_days: 7
+  promotion_threshold: 0.02              # challenger must beat champion by 2%
+  output_dir: outputs/shadow
+
+governance_report:
+  output_html: outputs/governance_report.html
+  powerbi_push: true
+  workspace_id: ${POWERBI_WORKSPACE_ID}
+  dataset_id: your-governance-dataset-id
+  table_name: ModelGovernance
+
+alerts:
+  enabled: true
+  drift_alert: true
+  performance_alert: true
+  teams_webhook_url: ${TEAMS_WEBHOOK_URL}
+  email:
+    smtp_host: ${SMTP_HOST}
+    port: ${SMTP_PORT}
+    user: ${SMTP_USER}
+    from_addr: ${ALERT_FROM}
+    recipients: ${ALERT_EMAIL_RECIPIENTS}
+  log_path: logs/governance_alerts.jsonl
+
+audit:
+  log_dir: logs/audit
+  hash_features: true                    # hash feature snapshots for immutability
+  retention_days: 2555                   # 7 years for SR 11-7 compliance
+
+logging:
+  level: INFO
